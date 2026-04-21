@@ -1,0 +1,51 @@
+name: dbt CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'models/**'
+      - 'tests/**'
+      - 'macros/**'
+      - 'snapshots/**'
+
+jobs:
+  dbt-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dbt-snowflake
+        run: pip install dbt-snowflake==1.11.7
+
+      - name: Create profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << EOF
+          retail_project:
+            target: ci
+            outputs:
+              ci:
+                type: snowflake
+                account: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+                user: ${{ secrets.SNOWFLAKE_USER }}
+                password: ${{ secrets.SNOWFLAKE_PASSWORD }}
+                role: DBT_ROLE
+                warehouse: COMPUTE_WH
+                database: RETAIL_DW
+                schema: STAGING
+                threads: 4
+          EOF
+
+      - name: dbt deps
+        run: dbt deps
+
+      - name: dbt build
+        run: dbt build --no-partial-parse
