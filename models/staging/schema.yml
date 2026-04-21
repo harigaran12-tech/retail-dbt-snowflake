@@ -1,0 +1,136 @@
+version: 2
+
+sources:
+  - name: raw
+    database: RETAIL_DW
+    schema: RAW
+    tables:
+      - name: RAW_ORDERS
+        config:
+          loaded_at_field: CREATED_AT
+          freshness:
+            warn_after:  {count: 24, period: hour}
+            error_after: {count: 48, period: hour}
+        
+      - name: RAW_CUSTOMERS
+      - name: RAW_PRODUCTS
+      - name: RAW_INVENTORY
+      - name: RAW_RETURNS
+
+models:
+  - name: stg_orders
+    description: "Cleaned and typed orders from RAW layer"
+    columns:
+      - name: order_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+      - name: order_status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['PENDING','SHIPPED','DELIVERED','RETURNED','CANCELLED']
+      - name: channel
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['ONLINE','RETAIL','WHOLESALE']
+      - name: region
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['NORTH','SOUTH','EAST','WEST']
+      - name: quantity
+        tests:
+          - not_null
+      - name: unit_price
+        tests:
+          - not_null
+      - name: net_revenue
+        tests:
+          - not_null
+
+  - name: stg_customers
+    description: "Cleaned customer master data"
+    columns:
+      - name: customer_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: email
+        tests:
+          - unique
+          - not_null
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['PREMIUM','STANDARD','WHOLESALE']
+
+  - name: stg_products
+    description: "Cleaned product catalogue"
+    columns:
+      - name: product_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: category
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['ELECTRONICS','APPAREL','SPORTS','HOME']
+      - name: unit_cost
+        tests:
+          - not_null
+      - name: list_price
+        tests:
+          - not_null
+
+  - name: stg_inventory
+    description: "Warehouse inventory levels"
+    columns:
+      - name: inventory_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: product_id
+        tests:
+          - not_null
+      - name: stock_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['HEALTHY','MEDIUM_STOCK','LOW_STOCK','OUT_OF_STOCK']
+
+  - name: stg_returns
+    description: "Cleaned returns data"
+    columns:
+      - name: return_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: order_id
+        tests:
+          - not_null
+      - name: return_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['APPROVED','PENDING','REJECTED']
+      - name: return_reason
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['DEFECTIVE','WRONG_ITEM','NOT_NEEDED','OTHER']

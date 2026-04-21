@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: "Incremental fact table enriched with customer and product details"
+    columns:
+      - name: order_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+              to: ref('dim_customer')
+              field: customer_id
+      - name: product_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+              to: ref('dim_product')
+              field: product_id
+      - name: order_status
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['PENDING','SHIPPED','DELIVERED','RETURNED','CANCELLED']
+      - name: net_revenue
+        tests:
+          - not_null
+      - name: gross_profit
+        tests:
+          - not_null
+
+  - name: dim_customer
+    description: "Customer dimension with lifetime value metrics"
+    columns:
+      - name: customer_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['PREMIUM','STANDARD','WHOLESALE']
+      - name: customer_value_tier
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['HIGH_VALUE','MID_VALUE','LOW_VALUE','NO_ORDERS']
+
+  - name: dim_product
+    description: "Product dimension with sales performance metrics"
+    columns:
+      - name: product_id
+        description: "Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: sales_tier
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['TOP_SELLER','MID_SELLER','LOW_SELLER','NO_SALES']
+
+  - name: mart_revenue_summary
+    description: "Monthly revenue aggregation by region, channel and category"
+    columns:
+      - name: total_revenue
+        tests:
+          - not_null
+      - name: total_orders
+        tests:
+          - not_null

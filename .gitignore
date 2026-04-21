@@ -1,0 +1,21 @@
+# dbt generated files — never commit these
+target/
+dbt_packages/
+logs/
+
+# Credentials — NEVER commit this
+profiles.yml
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+dbt_env/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
